@@ -1,0 +1,18 @@
+[package]
+name = "db-test"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+diesel = { version = "2.0.1", features = ["sqlite"] }
+dotenvy = "0.15"
+
+[lib]
+name= "dbtest"
+path= "src/lib.rs"
+
+[[bin]]
+name = "add_keypoint"
+path = "src/bin/add_keypoint.rs"
