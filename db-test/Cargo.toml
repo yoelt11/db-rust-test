@@ -13,6 +13,29 @@ dotenvy = "0.15"
 name= "dbtest"
 path= "src/lib.rs"
 
+# keypoint bin
 [[bin]]
 name = "add_keypoint"
 path = "src/bin/add_keypoint.rs"
+
+[[bin]]
+name = "show_keypoints"
+path = "src/bin/show_keypoints.rs"
+
+# room bin
+[[bin]]
+name = "add_room"
+path = "src/bin/add_room.rs"
+
+[[bin]]
+name = "show_rooms"
+path = "src/bin/show_rooms.rs"
+
+# object bin
+[[bin]]
+name = "add_object"
+path = "src/bin/add_object.rs"
+
+[[bin]]
+name = "show_objects"
+path = "src/bin/show_objects.rs"
