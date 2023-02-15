@@ -46,13 +46,13 @@ pub fn create_object(conn: &mut SqliteConnection, object_name: &str, room_list: 
     use crate::schema::room_object;
     use crate::models::Room;
     use crate::models::Object;
-    use self::schema::rooms::dsl::*;
-    use self::schema::objects::dsl::*;
+    //use self::schema::rooms::dsl::*;
+    //use self::schema::objects::dsl::*;
 
 
     // for each room create if it doesnt exists
-    let new_rooms = room_list.iter().map(|name| NewRoom{
-        name:name
+    let new_rooms = room_list.iter().map(|room_name| NewRoom{
+        name:room_name
     }).collect::<Vec<NewRoom>>();
     
     diesel::insert_or_ignore_into(rooms::table)
@@ -69,12 +69,12 @@ pub fn create_object(conn: &mut SqliteConnection, object_name: &str, room_list: 
 
     // associate objects with rooms
         // get the ids of the rooms as vector
-    let room_ids = rooms::table.filter(room_id.eq(args[1].parse::<i32>().unwrap()))
-        .load::<Room>(&mut conn())
-        .expect("Error loading rooms");
+    let room_ids = room_list.iter().map(|room_name| {rooms::table.filter(rooms::name.eq(room_name).id)
+        .load::<Room>(&mut conn)
+        .expect("Error loading rooms")}).collect::<Vec<i32>>();
         // get the ids of the objects as int
-    let object_id = objects::table.filter(name.eq(object_name)
-        .load::<Object>(&mut conn())
+    let object_id = objects::table.filter(objects::name.eq(object_name))
+        .load::<Object>(conn)
         .expect("Error loading rooms");
         // create (objec_id, room_id) pairs
     let room_objects = room_ids.iter().map(|room_id| {
