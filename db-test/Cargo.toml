@@ -37,5 +37,14 @@ name = "add_object"
 path = "src/bin/add_object.rs"
 
 [[bin]]
-name = "show_objects"
-path = "src/bin/show_objects.rs"
+name = "get_rooms_by_object"
+path = "src/bin/get_rooms_by_object.rs"
+
+# pose bin
+[[bin]]
+name = "add_pose"
+path = "src/bin/add_pose.rs"
+[[bin]]
+
+name = "show_poses"
+path = "src/bin/show_poses.rs"
