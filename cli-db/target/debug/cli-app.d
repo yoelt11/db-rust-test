@@ -1,0 +1,1 @@
+/home/etorres/Documents/github/personal/db-rust-test/cli-db/target/debug/cli-app: /home/etorres/Documents/github/personal/db-rust-test/cli-db/src/lib/lib.rs /home/etorres/Documents/github/personal/db-rust-test/cli-db/src/main.rs
