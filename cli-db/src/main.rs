@@ -4,16 +4,15 @@ fn main() {
     let cmd = Command::new("cli-db")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
-        .arg(Arg::new("add_entries")
-                .short('a')
-                .long("add_entries")
-                .value_name("Entry"))
-        .arg(Arg::new("show_entries")
-                .short('l')
-                .long("show_entries")
-                .value_name("Entry"))
+            .about("Multi-level menu example")
+        .arg(Arg::new("COMMAND"))
+        .arg(Arg::new("options")
+                .short('o')
+                .long("options")
+                .value_name("rooms, keypoints, poses, objects, tier1, tier2"))
         .get_matches();
 
-    println!("{:?}", cmd);
+        println!("{:?}", cmd.get_one::<String>("COMMAND"));
+        println!("{:?}", cmd.get_one::<String>("options"));
 }
 
