@@ -1,5 +1,6 @@
 use clap::{Command, Arg, ArgAction };
 use lib::add_entries::{add_room, add_object, add_keypoint, add_poses, add_tier1, add_tier2};
+use lib::get_entries::{get_room, get_tier1, get_tier2};
 
 fn main() {
 
@@ -52,10 +53,47 @@ fn main() {
                     .short('k')
                     .long("kph")
                     .value_name("The keypoint hits related to the tier2 activity"))
-                
                 ))
         .subcommand(Command::new("show_entries")
             .arg(Arg::new("table")))
+        .subcommand(Command::new("get_entries")
+            .subcommand(Command::new("room")
+                .arg(Arg::new("objects")
+                    .short('o')
+                    .num_args(0..)
+                    .long("objects") 
+                    .value_name("A list of objects")
+                ))
+            .subcommand(Command::new("tier1")
+                .arg(Arg::new("objects")
+                    .num_args(0..)
+                    .short('o')
+                    .long("objects")
+                    .value_name("The local objects related to the tier1 activity"))
+                .arg(Arg::new("rooms")
+                    .num_args(0..)
+                    .short('r')
+                    .long("rooms")
+                    .value_name("The room related to the tier1 activity"))
+                .arg(Arg::new("pose")
+                    .num_args(0..)
+                    .short('p')
+                    .long("pose")
+                    .value_name("The pose related to the tier1 activity"))
+        )
+            .subcommand(Command::new("tier2")
+                .arg(Arg::new("tier1")
+                    .short('t')
+                    .long("tier1")
+                    .value_name("The tier1 activity related to the tier2 activity"))
+                .arg(Arg::new("keypoint-hits")
+                    .action(ArgAction::Append)
+                    .num_args(2)
+                    .short('k')
+                    .long("kph")
+                    .value_name("The keypoint hits related to the tier2 activity"))
+            )
+        )
         .get_matches();
 
     match app_m.subcommand() {
@@ -71,7 +109,15 @@ fn main() {
             }
         },
         Some(("show_entry",  _sub_m)) => {println!("push was used")}, 
-        _ => {}, 
+        Some(("get_entries",  sub_m)) => {
+            match sub_m.subcommand(){
+                Some(("room", level3_m)) => {get_room(level3_m)},
+                Some(("tier1", level3_m)) => {get_tier1(level3_m)},
+                Some(("tier2", level3_m)) => {get_tier2(level3_m)},
+                _  => println!("Error matching options")
+            }
+        },
+        _ => {println!("Error matching outermost")}, 
     }
 }
 
