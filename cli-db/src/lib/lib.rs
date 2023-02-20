@@ -6,7 +6,7 @@ use dotenvy::dotenv;
 use std::env;
 pub mod models;
 pub mod schema;
-use self::models::{NewKeypoint, NewObject, NewPose, NewRoom, NewRoomObject};
+//use self::models::{NewKeypoint, NewObject, NewPose, NewRoom, NewRoomObject};
 
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();

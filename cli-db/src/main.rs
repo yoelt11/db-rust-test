@@ -1,4 +1,4 @@
-use clap::{Command, Arg, ArgAction, value_parser};
+use clap::{Command, Arg, ArgAction };
 use lib::add_entries::{add_room, add_object, add_keypoint, add_poses, add_tier1, add_tier2};
 
 fn main() {
@@ -34,7 +34,8 @@ fn main() {
                     .short('r')
                     .long("rooms")
                     .value_name("The room related to the tier1 activity"))
-                .arg(Arg::new("pose")
+                .arg(Arg::new("poses")
+                    .num_args(0..)
                     .short('p')
                     .long("pose")
                     .value_name("The pose related to the tier1 activity"))
@@ -69,8 +70,8 @@ fn main() {
                 _  => println!("Error matching options")
             }
         },
-        Some(("show_entry",   sub_m)) => {println!("push was used")}, 
-        _                       => {}, 
+        Some(("show_entry",  _sub_m)) => {println!("push was used")}, 
+        _ => {}, 
     }
 }
 

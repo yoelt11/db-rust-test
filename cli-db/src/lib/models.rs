@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use crate::schema::{keypoints, rooms, objects, poses, room_object, tier1_activities, tier1_activity_poses, tier1_activity_rooms, tier1_activity_objects};
+use crate::schema::*;
 
 // Models: Keypoint
 #[derive(Debug, Queryable)]
@@ -94,4 +94,41 @@ pub struct NewTier1Room {
 pub struct NewTier1Pose {
     pub pose_id: i32,
     pub tier1_id: i32,
+}
+
+// Models: Tier2Activities
+#[derive(Debug, Queryable)]
+pub struct Tier2Activities {
+    pub tier2_id: i32,
+    pub tier2: String,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = tier2activities)]
+pub struct NewTier2Activity<'a> {
+    pub tier2: &'a str,
+}
+
+// Tier2 relations
+#[derive(Insertable)]
+#[diesel(table_name = tier2_tier1_kph)]
+pub struct NewTier2Tier1Kph {
+    pub tier2_id: i32,
+    pub tier1_id: i32,
+    pub kph_id: i32,
+}
+
+// Models: KPH
+#[derive(Debug, Queryable)]
+pub struct KeypointHits {
+    pub kph_id: i32,
+    pub object_id: i32,
+    pub keypoint_id: i32,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = keypoint_hits)]
+pub struct NewKPH {
+    pub object_id: i32,
+    pub keypoint_id: i32
 }

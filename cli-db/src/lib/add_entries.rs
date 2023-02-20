@@ -1,5 +1,5 @@
-use clap::{ArgMatches, builder::Str};
-use crate::models::{NewKeypoint, NewObject, NewPose, NewRoom, NewRoomObject};
+use clap::{ArgMatches};
+use crate::models::*;
 use crate::establish_connection;
 use diesel::prelude::*;
 
@@ -27,26 +27,24 @@ pub fn add_object(matches:&ArgMatches){
     use crate::schema::objects;
     use crate::schema::room_object;
     use crate::schema::rooms;
-    use crate::models::Object;
-    use crate::models::Room;
 
     // get inputs from cli
-    let object = matches.get_one::<String>("object").unwrap();
-    let rooms = matches.get_many::<String>("rooms").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
-    println!("adding object: {:?}", object);   
-    println!("adding rooms: {:?}", rooms);   
+    let object_name = matches.get_one::<String>("object").unwrap();
+    let room_names = matches.get_many::<String>("rooms").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
+    println!("adding object: {:?}", object_name);   
+    println!("adding rooms: {:?}", room_names);   
     
     // generate connection to db 
     let connection =  &mut establish_connection();
     
-    // generate connection to db
-    let new_object = NewObject { name: object};
+    //  create the object if it doesnt exists
+    let new_object = NewObject { name: object_name};
     diesel::insert_or_ignore_into(objects::table)
         .values(&new_object)
         .execute(connection).unwrap(); //  unwrap unsafe must pass error
                                        //
     // for each room create if it doesnt exists
-    let new_rooms = rooms
+    let new_rooms = room_names
         .iter()
         .map(|room_name| NewRoom { name: room_name })
         .collect::<Vec<NewRoom>>();
@@ -55,24 +53,24 @@ pub fn add_object(matches:&ArgMatches){
         .values(&new_rooms)
         .execute(connection).unwrap();
     
-       // load rooms and object once
-       let rooms = rooms::table
-       .filter(rooms::name.eq_any(rooms))
+    // load rooms and object once
+    let rooms = rooms::table
+       .filter(rooms::name.eq_any(room_names))
        .load::<Room>(connection).unwrap();
-   let object = objects::table
-       .filter(objects::name.eq(object))
+    let object = objects::table
+       .filter(objects::name.eq(object_name))
        .first::<Object>(connection).unwrap();
 
-   // associate objects with rooms
-   let room_objects = rooms
+    // associate objects with rooms
+    let room_objects = rooms
        .iter()
        .map(|room| NewRoomObject {
            room_id: room.room_id,
            object_id: object.object_id,
        })
        .collect::<Vec<NewRoomObject>>();
-   // insert to table
-   diesel::insert_or_ignore_into(room_object::table)
+    // insert to table
+    diesel::insert_or_ignore_into(room_object::table)
        .values(room_objects)
        .execute(connection).unwrap();
 }    
@@ -117,27 +115,235 @@ pub fn add_poses(matches:&ArgMatches){
         .expect("Error saving keypoint");
 }    
 
-//TODO
 pub fn add_tier1(matches:&ArgMatches){
-    let tier1 = matches.get_one::<String>("tier1").unwrap();   
-    let pose = matches.get_one::<String>("pose").unwrap();   
-    let rooms = matches.get_many::<String>("rooms").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
-    let objects = matches.get_many::<String>("object").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
+    // schema.rs
+    use crate::schema::objects;
+    use crate::schema::tier1_activity_objects;
+    use crate::schema::rooms;
+    use crate::schema::tier1_activity_rooms;
+    use crate::schema::poses;
+    use crate::schema::tier1_activity_poses;
+    use crate::schema::tier1_activities;
 
-    println!("adding tier1: {:?}", tier1);   
-    println!("adding pose: {:?}", pose);   
-    println!("adding object: {:?}", objects);   
-    println!("adding rooms: {:?}", rooms);   
+    // get variables from cli
+    let tier1_name = matches.get_one::<String>("tier1").unwrap();   
+    let pose_names = matches.get_many::<String>("poses").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();   
+    let room_names = matches.get_many::<String>("rooms").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
+    let object_names = matches.get_many::<String>("object").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
+
+    println!("adding tier1: {:?}", tier1_name);   
+    println!("adding pose: {:?}", pose_names);   
+    println!("adding object: {:?}", object_names);   
+    println!("adding rooms: {:?}", room_names);   
+
+    // generate connection to db 
+    let connection =  &mut establish_connection();
+
+    // create tier 1 activity if not exists
+    let new_activity = NewTier1Activity {tier1: tier1_name};
+    diesel::insert_or_ignore_into(tier1_activities::table)
+        .values(&new_activity)
+        .execute(connection).unwrap(); //  unwrap unsafe must pass error
+
+    // create pose if not exists
+    let new_poses = pose_names
+        .iter()
+        .map(|pose_name| NewPose { name: pose_name })
+        .collect::<Vec<NewPose>>();
+
+    diesel::insert_or_ignore_into(poses::table)
+        .values(&new_poses)
+        .execute(connection).unwrap(); //  unwrap unsafe must pass error
+
+    // create rooms if not exists
+    let new_rooms = room_names
+        .iter()
+        .map(|room_name| NewRoom { name: room_name })
+        .collect::<Vec<NewRoom>>();
+
+    diesel::insert_or_ignore_into(rooms::table)
+        .values(&new_rooms)
+        .execute(connection).unwrap();
+
+    // create objects if not exists
+    let new_objects = object_names
+        .iter()
+        .map(|object_name| NewObject { name: object_name })
+        .collect::<Vec<NewObject>>();
+
+    diesel::insert_or_ignore_into(objects::table)
+        .values(&new_objects)
+        .execute(connection).unwrap();
+
+    // load model items 
+    let rooms = rooms::table
+       .filter(rooms::name.eq_any(room_names))
+       .load::<Room>(connection).unwrap();
+    
+    let objects = objects::table
+       .filter(objects::name.eq_any(object_names))
+       .load::<Object>(connection).unwrap();
+
+    let tier1 = tier1_activities::table
+       .filter(tier1_activities::tier1.eq(tier1_name))
+       .first::<Tier1Activities>(connection).unwrap();
+
+    let poses = poses::table
+       .filter(poses::name.eq_any(pose_names))
+       .load::<Pose>(connection).unwrap();
+    
+    // create relationship tables: Rooms-> Tier1  
+    let room_tier1 = rooms
+       .iter()
+       .map(|room| NewTier1Room {
+           room_id: room.room_id,
+           tier1_id: tier1.tier1_id,
+       })
+       .collect::<Vec<NewTier1Room>>();
+
+    diesel::insert_or_ignore_into(tier1_activity_rooms::table)
+       .values(room_tier1)
+       .execute(connection).unwrap();
+    
+    // create relationship tables: Objects-> Tier1  
+    let object_tier1 = objects
+       .iter()
+       .map(|object| NewTier1Object {
+           object_id: object.object_id,
+           tier1_id: tier1.tier1_id,
+       })
+       .collect::<Vec<NewTier1Object>>();
+
+    diesel::insert_or_ignore_into(tier1_activity_objects::table)
+       .values(object_tier1)
+       .execute(connection).unwrap();
+
+    // create relationship tables: Pose-> Tier1  
+    let pose_tier1 = poses
+       .iter()
+       .map(|pose| NewTier1Pose {
+           pose_id: pose.pose_id,
+           tier1_id: tier1.tier1_id,
+       })
+       .collect::<Vec<NewTier1Pose>>();
+
+    diesel::insert_or_ignore_into(tier1_activity_poses::table)
+       .values(pose_tier1)
+       .execute(connection).unwrap();
+
 }    
 
 //TODO
 pub fn add_tier2(matches:&ArgMatches){
-    let tier2 = matches.get_one::<String>("tier2").unwrap();   
-    let tier1 = matches.get_one::<String>("tier1").unwrap();   
-    let kph = matches.get_many::<String>("keypoint-hits").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
-    let pairs: Vec<_> = kph.chunks(2).map(|chunk| (chunk[0], chunk[1])).collect();
+    // schema.rs
+    use crate::schema::tier1_activities; // must change naming in all schema like below
+    use crate::schema::tier2activities;
+    use crate::schema::objects;
+    use crate::schema::keypoints;
+    use crate::schema::tier2_tier1_kph;
+    use crate::schema::keypoint_hits;
 
-    println!("tier1  {:?}", tier1);
-    println!("tier2  {:?}", tier2);
-    println!("keypoint hits {:?}", pairs);
+    // Get arguments from cli 
+    let tier2_name = matches.get_one::<String>("tier2").unwrap();   
+    let tier1_name = matches.get_one::<String>("tier1").unwrap();   
+    // Kp-hits are obtained as a flattened list e.g: {-k l_ear cellphone -k r_hand cellphone} -> [l_ear, cellphone, r_hand cellphone]
+    let kph = matches.get_many::<String>("keypoint-hits").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
+    // here we convert them into pairs -> [(l_ear, cellphone), (r_hand, cellphone)]
+    let kph_pairs: Vec<_> = kph.chunks(2).map(|chunk| (chunk[0], chunk[1])).collect();
+
+    // See what is being appended
+    println!("tier1  {:?}", tier1_name);
+    println!("tier2  {:?}", tier2_name);
+    println!("keypoint hits {:?}", kph_pairs);
+
+    // generate connection to db 
+    let connection =  &mut establish_connection();
+
+    // create tier2 if not exists
+    let new_tier2 = NewTier2Activity {tier2: tier2_name};
+    diesel::insert_or_ignore_into(tier2activities::table)
+        .values(&new_tier2)
+        .execute(connection).unwrap(); //  unwrap unsafe must pass error
+
+
+    // create tier1 if not exits
+    let new_activity = NewTier1Activity {tier1: tier1_name};
+    diesel::insert_or_ignore_into(tier1_activities::table)
+        .values(&new_activity)
+        .execute(connection).unwrap(); //  unwrap unsafe must pass error
+
+    for pair in &kph_pairs {
+        // create kph if not exits
+        let (keypoint_name, object_name) = pair;
+            // get kp id (then it must be created if it doesnt exists)
+        let new_keypoint = NewKeypoint { name: keypoint_name };
+
+        diesel::insert_or_ignore_into(keypoints::table)
+            .values(&new_keypoint)
+            .execute(connection)
+            .expect("Error saving keypoint");
+    
+        let keypoint = keypoints::table
+           .filter(keypoints::name.eq(keypoint_name))
+           .first::<Keypoint>(connection).unwrap();
+
+            // get object id (then it must be created if not exists)
+        let new_object = NewObject { name: object_name };
+
+        diesel::insert_or_ignore_into(objects::table)
+            .values(&new_object)
+            .execute(connection)
+            .expect("Error saving object");
+
+        let object = objects::table
+           .filter(objects::name.eq(object_name))
+           .first::<Object>(connection).unwrap();
+
+            // add kph to table
+        let new_kph = NewKPH {
+                object_id: object.object_id,
+                keypoint_id: keypoint.keypoint_id,
+            };
+
+        diesel::insert_or_ignore_into(keypoint_hits::table)
+             .values(&new_kph)
+             .execute(connection).unwrap();
+    }
+    // load database items 
+        // get id from tier2 
+    let tier2 = tier2activities::table
+       .filter(tier2activities::tier2.eq(tier2_name))
+       .first::<Tier2Activities>(connection).unwrap();
+        // get id from tier1
+    let tier1 = tier1_activities::table
+       .filter(tier1_activities::tier1.eq(tier1_name))
+       .first::<Tier1Activities>(connection).unwrap();
+        // get ids from kph 
+    // for only one pair
+    let kph: Vec<i32> = kph_pairs
+         .iter()
+         .flat_map(|(keypoint_name, object_name)| {
+             keypoint_hits::table
+             .inner_join(keypoints::table)
+             .inner_join(objects::table)
+             .filter(keypoints::name.eq(keypoint_name)
+                .and(objects::name.eq(object_name))) 
+             .select(keypoint_hits::kph_id)
+             .load::<i32>(connection)
+             .unwrap_or_else(|_| Vec::new())
+         }).collect();
+
+    // create relationship between items (Create a tier2_tier1_kph object)
+    let tier2_tier1_kph = kph
+       .iter()
+       .map(|&id| NewTier2Tier1Kph { 
+           tier2_id: tier2.tier2_id,
+           tier1_id: tier1.tier1_id,
+           kph_id: id,
+       })
+       .collect::<Vec<NewTier2Tier1Kph>>();
+    
+    diesel::insert_or_ignore_into(tier2_tier1_kph::table)
+       .values(tier2_tier1_kph)
+       .execute(connection).unwrap();
 }    

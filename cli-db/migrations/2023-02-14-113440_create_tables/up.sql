@@ -69,13 +69,13 @@ CREATE Table  tier1_activity_poses (
     FOREIGN KEY (tier1_id) REFERENCES tier1activities(tier1_id)
 );
 
-CREATE Table  tier1activity_tier2activity (
+/**CREATE Table  tier1activity_tier2activity (
     tier1_id INTEGER NOT NULL,
     tier2_id INTEGER NOT NULL,
     PRIMARY KEY (tier1_id, tier2_id),
     FOREIGN KEY (tier1_id) REFERENCES tier1activities(tier1_id),
     FOREIGN KEY (tier2_id) REFERENCES tier2activities(tier2_id)
-);
+); **/
 
 CREATE Table keypoint_hits(
     kph_id INTEGER PRIMARY KEY NOT NULL,
