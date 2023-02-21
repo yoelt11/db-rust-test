@@ -95,8 +95,6 @@ pub fn add_keypoint(matches:&ArgMatches){
 }    
 
 pub fn add_poses(matches:&ArgMatches){
-    let pose = matches.get_one::<String>("pose").unwrap();   
-    println!("adding pose: {:?}", pose);   
     use crate::schema::poses;
 
     // gets keypoint from cli
@@ -123,7 +121,7 @@ pub fn add_tier1(matches:&ArgMatches){
     use crate::schema::tier1_activity_rooms;
     use crate::schema::poses;
     use crate::schema::tier1_activity_poses;
-    use crate::schema::tier1_activities;
+    use crate::schema::tier1activities;
 
     // get variables from cli
     let tier1_name = matches.get_one::<String>("tier1").unwrap();   
@@ -141,7 +139,7 @@ pub fn add_tier1(matches:&ArgMatches){
 
     // create tier 1 activity if not exists
     let new_activity = NewTier1Activity {tier1: tier1_name};
-    diesel::insert_or_ignore_into(tier1_activities::table)
+    diesel::insert_or_ignore_into(tier1activities::table)
         .values(&new_activity)
         .execute(connection).unwrap(); //  unwrap unsafe must pass error
 
@@ -184,8 +182,8 @@ pub fn add_tier1(matches:&ArgMatches){
        .filter(objects::name.eq_any(object_names))
        .load::<Object>(connection).unwrap();
 
-    let tier1 = tier1_activities::table
-       .filter(tier1_activities::tier1.eq(tier1_name))
+    let tier1 = tier1activities::table
+       .filter(tier1activities::tier1.eq(tier1_name))
        .first::<Tier1Activities>(connection).unwrap();
 
     let poses = poses::table
@@ -236,7 +234,7 @@ pub fn add_tier1(matches:&ArgMatches){
 //TODO
 pub fn add_tier2(matches:&ArgMatches){
     // schema.rs
-    use crate::schema::tier1_activities; // must change naming in all schema like below
+    use crate::schema::tier1activities; 
     use crate::schema::tier2activities;
     use crate::schema::objects;
     use crate::schema::keypoints;
@@ -268,7 +266,7 @@ pub fn add_tier2(matches:&ArgMatches){
 
     // create tier1 if not exits
     let new_activity = NewTier1Activity {tier1: tier1_name};
-    diesel::insert_or_ignore_into(tier1_activities::table)
+    diesel::insert_or_ignore_into(tier1activities::table)
         .values(&new_activity)
         .execute(connection).unwrap(); //  unwrap unsafe must pass error
 
@@ -315,8 +313,8 @@ pub fn add_tier2(matches:&ArgMatches){
        .filter(tier2activities::tier2.eq(tier2_name))
        .first::<Tier2Activities>(connection).unwrap();
         // get id from tier1
-    let tier1 = tier1_activities::table
-       .filter(tier1_activities::tier1.eq(tier1_name))
+    let tier1 = tier1activities::table
+       .filter(tier1activities::tier1.eq(tier1_name))
        .first::<Tier1Activities>(connection).unwrap();
         // get ids from kph 
     // for only one pair

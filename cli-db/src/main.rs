@@ -111,8 +111,14 @@ fn main() {
         Some(("show_entry",  _sub_m)) => {println!("push was used")}, 
         Some(("get_entries",  sub_m)) => {
             match sub_m.subcommand(){
-                Some(("room", level3_m)) => {get_room(level3_m)},
-                Some(("tier1", level3_m)) => {get_tier1(level3_m)},
+                Some(("room", level3_m)) => {
+                    let room = get_room(level3_m);
+                    println!("voted room: {:?}", room);
+                },
+                Some(("tier1", level3_m)) => {
+                    let tier1 = get_tier1(level3_m);
+                    println!("voted activity: {:?}", tier1);
+                },
                 Some(("tier2", level3_m)) => {get_tier2(level3_m)},
                 _  => println!("Error matching options")
             }

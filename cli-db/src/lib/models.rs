@@ -69,7 +69,7 @@ pub struct Tier1Activities {
 }
 
 #[derive(Insertable)]
-#[diesel(table_name = tier1_activities)]
+#[diesel(table_name = tier1activities)]
 pub struct NewTier1Activity<'a> {
     pub tier1: &'a str,
 }

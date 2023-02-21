@@ -24,7 +24,7 @@ CREATE Table poses (
     UNIQUE (name)
  );
 
-CREATE Table tier1_activities (
+CREATE Table tier1activities (
     tier1_id INTEGER PRIMARY KEY NOT NULL,
     tier1 Text NOT NULL,
     UNIQUE (tier1)

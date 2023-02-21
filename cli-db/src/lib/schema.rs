@@ -44,13 +44,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    tier1_activities (tier1_id) {
-        tier1_id -> Integer,
-        tier1 -> Text,
-    }
-}
-
-diesel::table! {
     tier1_activity_objects (object_id, tier1_id) {
         object_id -> Integer,
         tier1_id -> Integer,
@@ -68,6 +61,13 @@ diesel::table! {
     tier1_activity_rooms (room_id, tier1_id) {
         room_id -> Integer,
         tier1_id -> Integer,
+    }
+}
+
+diesel::table! {
+    tier1activities (tier1_id) {
+        tier1_id -> Integer,
+        tier1 -> Text,
     }
 }
 
@@ -91,9 +91,13 @@ diesel::joinable!(keypoint_hits -> objects (object_id));
 diesel::joinable!(room_object -> objects (object_id));
 diesel::joinable!(room_object -> rooms (room_id));
 diesel::joinable!(tier1_activity_objects -> objects (object_id));
+diesel::joinable!(tier1_activity_objects -> tier1activities (tier1_id));
 diesel::joinable!(tier1_activity_poses -> poses (pose_id));
+diesel::joinable!(tier1_activity_poses -> tier1activities (tier1_id));
 diesel::joinable!(tier1_activity_rooms -> rooms (room_id));
+diesel::joinable!(tier1_activity_rooms -> tier1activities (tier1_id));
 diesel::joinable!(tier2_tier1_kph -> keypoint_hits (kph_id));
+diesel::joinable!(tier2_tier1_kph -> tier1activities (tier1_id));
 diesel::joinable!(tier2_tier1_kph -> tier2activities (tier2_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
@@ -103,10 +107,10 @@ diesel::allow_tables_to_appear_in_same_query!(
     poses,
     room_object,
     rooms,
-    tier1_activities,
     tier1_activity_objects,
     tier1_activity_poses,
     tier1_activity_rooms,
+    tier1activities,
     tier2_tier1_kph,
     tier2activities,
 );
