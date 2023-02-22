@@ -1,5 +1,6 @@
 pub mod add_entries;
 pub mod get_entries;
+pub mod get_entries_g;
 pub mod show_entries;
 use diesel::prelude::*;
 use diesel::SqliteConnection;
