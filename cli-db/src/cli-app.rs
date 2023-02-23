@@ -1,6 +1,7 @@
 use clap::{Command, Arg, ArgAction };
 use lib::add_entries::{add_room, add_object, add_keypoint, add_poses, add_tier1, add_tier2};
 use lib::get_entries::{get_room, get_tier1, get_tier2};
+use lib::input_types::*;
 
 fn main() {
 
@@ -99,7 +100,7 @@ fn main() {
     match app_m.subcommand() {
         Some(("add_entry",  sub_m)) => {
             match sub_m.subcommand(){
-                Some(("rooms", level3_m)) => {add_room(level3_m)},
+                Some(("rooms", level3_m)) => {add_room({level3_m})},
                 Some(("keypoints", level3_m)) => {add_keypoint(level3_m)},
                 Some(("poses", level3_m)) => {add_poses(level3_m)},
                 Some(("objects", level3_m)) => {add_object(level3_m)},
@@ -112,14 +113,14 @@ fn main() {
         Some(("get_entries",  sub_m)) => {
             match sub_m.subcommand(){
                 Some(("room", level3_m)) => {
-                    let room = get_room(level3_m);
+                    let room = get_room(RoomInput::Cli(level3_m.clone()));
                     println!("voted room: {:?}", room);
                 },
                 Some(("tier1", level3_m)) => {
-                    let tier1 = get_tier1(level3_m);
+                    let tier1 = get_tier1(Tier1Input::Cli(level3_m.clone()));
                     println!("voted activity: {:?}", tier1);
                 },
-                Some(("tier2", level3_m)) => {get_tier2(level3_m)},
+                Some(("tier2", level3_m)) => {get_tier2(Tier2Input::Cli(level3_m.clone()))},
                 _  => println!("Error matching options")
             }
         },

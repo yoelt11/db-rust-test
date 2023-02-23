@@ -1,26 +1,27 @@
-use std::fmt::Debug;
+use clap::ArgMatches;
 
-pub trait RoomInput {
-    fn getRoom(&self);
+pub enum RoomInput {
+    Cli(ArgMatches),
+    Json(Vec<String>)
 }
 
-impl RoomInput for JsonGetRoomInput {
-    fn getRoom(&self) {
-        println!("{:?}", self.input);
-    }
-}
-impl RoomInput for CliGetRoomInput {
-    fn getRoom(&self) {
-        println!("{}", self.input);
-    }
+pub fn get_room(input: RoomInput) {
+    let objects = match input {
+        RoomInput::Cli(arg_matches) => {
+            arg_matches.get_many::<String>("objects")
+                .unwrap_or_default()
+                .map(|v| v.to_owned())
+                .collect()
+        }
+        RoomInput::Json(objects) => objects,
+    };
+
+    println!("{:?}", objects);
 }
 
-#[derive(Debug)]
-pub struct JsonGetRoomInput {
-    pub input: Vec<String>,
-}
+pub fn test() {
+    let objects = vec!["item".to_string(),"item".to_string()];
+    let input = RoomInput::Json(objects);
 
-#[derive(Debug)]
-pub struct CliGetRoomInput {
-    pub input: String,   
+    get_room(input);
 }
