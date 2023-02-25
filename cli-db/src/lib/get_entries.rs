@@ -109,7 +109,7 @@ pub fn get_tier1(input: Tier1Input) -> String{
 
     most_common.to_string()
 }
-pub fn get_tier2(input: Tier2Input)-> String{
+pub fn get_tier2(input: Tier2Input)-> String {
     use crate::schema::tier1activities; 
     use crate::schema::tier2activities;
     use crate::schema::objects;

@@ -1,53 +1,7 @@
 use lib::input_types::*;
 use lib::get_entries::*;
-use serde::{Deserialize};
+use lib::json_data_structs::*;
 use serde_json;
-
-
-#[derive(Deserialize)]
-#[serde(tag = "topic")]
-enum Topic {
-    #[serde(rename = "getRooms")]
-    GetRooms {message: RoomMessage},
-    
-    #[serde(rename = "getTier1")]
-    GetTier1 {message: Tier1Message},
-
-    #[serde(rename = "getTier2")]
-    GetTier2 {message: Tier2Message},
-}
-
-// getRooms Message
-#[derive(Deserialize)]
-struct RoomMessage{
-    objects:Vec<Objects>,
-}
-
-// getTier1 Message
-#[derive(Deserialize)]
-struct Tier1Message{
-    objects:Vec<Objects>,
-    rooms:Vec<Rooms>,
-    pose: String,
-}
-
-// getTier2 Message
-#[derive(Deserialize)]
-struct Tier2Message{
-    tier1:String,
-    kph: Vec<(String, String)>
-}
-
-// child components
-#[derive(Deserialize)]
-struct Rooms{
-    name: String,
-}
-#[derive(Debug, Deserialize, Clone)]
-struct Objects{
-    name: String,
-}
-
 
 fn main() {
     let json_string = std::env::args().nth(1).expect("No JSON string provided");

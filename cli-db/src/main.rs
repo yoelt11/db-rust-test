@@ -1,6 +1,7 @@
 use clap::{Command, Arg, ArgAction };
 use lib::add_entries::{add_room, add_object, add_keypoint, add_poses, add_tier1, add_tier2};
 use lib::get_entries::{get_room, get_tier1, get_tier2};
+use lib::input_types::*;
 
 fn main() {
 
@@ -112,14 +113,17 @@ fn main() {
         Some(("get_entries",  sub_m)) => {
             match sub_m.subcommand(){
                 Some(("room", level3_m)) => {
-                    let room = get_room(level3_m);
+                    let room = get_room(RoomInput::Cli(level3_m.clone()));
                     println!("voted room: {:?}", room);
                 },
                 Some(("tier1", level3_m)) => {
-                    let tier1 = get_tier1(level3_m);
+                    let tier1 = get_tier1(Tier1Input::Cli(level3_m.clone()));
                     println!("voted activity: {:?}", tier1);
                 },
-                Some(("tier2", level3_m)) => {get_tier2(level3_m)},
+                Some(("tier2", level3_m)) => {
+                    let tier2 = get_tier2(Tier2Input::Cli(level3_m.clone()));
+                    println!("voted activity: {:?}", tier2);
+                },
                 _  => println!("Error matching options")
             }
         },

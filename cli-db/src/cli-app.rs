@@ -100,7 +100,7 @@ fn main() {
     match app_m.subcommand() {
         Some(("add_entry",  sub_m)) => {
             match sub_m.subcommand(){
-                Some(("rooms", level3_m)) => {add_room({level3_m})},
+                Some(("rooms", level3_m)) => {add_room(level3_m)},
                 Some(("keypoints", level3_m)) => {add_keypoint(level3_m)},
                 Some(("poses", level3_m)) => {add_poses(level3_m)},
                 Some(("objects", level3_m)) => {add_object(level3_m)},
@@ -120,7 +120,10 @@ fn main() {
                     let tier1 = get_tier1(Tier1Input::Cli(level3_m.clone()));
                     println!("voted activity: {:?}", tier1);
                 },
-                Some(("tier2", level3_m)) => {get_tier2(Tier2Input::Cli(level3_m.clone()))},
+                Some(("tier2", level3_m)) => {
+                    let tier2 = get_tier2(Tier2Input::Cli(level3_m.clone()));
+                    println!("voted activity: {:?}", tier2);
+                },
                 _  => println!("Error matching options")
             }
         },
