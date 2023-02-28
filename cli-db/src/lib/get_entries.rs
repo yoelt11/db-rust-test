@@ -1,8 +1,8 @@
-use crate::{establish_connection, input_types::{RoomInput, Tier1Input, Tier2Input}};
-use clap::{ArgMatches};
+use crate::{establish_connection, input_types::{ActivityInput, RoomInput, Tier1Input, Tier2Input}};
 use diesel::prelude::*;
+use std::collections::HashMap;
 
-pub fn get_room(input: RoomInput) -> String {
+pub fn get_room(input: RoomInput) -> Vec<String> {
     //TODO: must handle empty query
     //TODO: must handle ties
     use crate::schema::room_object;
@@ -20,14 +20,12 @@ pub fn get_room(input: RoomInput) -> String {
         RoomInput::Json(objects) => objects,
     };
 
-    println!("querying by using object: {:?}", object_names);   
-    
     // perform query
     // generate connection to db 
     let connection =  &mut establish_connection();
 
     // perform query
-    let query = room_object::table
+    let query: Vec<String> = room_object::table
         .inner_join(rooms::table)
         .inner_join(objects::table)
         .filter(objects::name.eq_any(object_names))
@@ -35,15 +33,12 @@ pub fn get_room(input: RoomInput) -> String {
         .load::<String>(connection)
         .unwrap();
 
-    let most_common = query.iter()
-        .max_by_key(|&element| query.iter().filter(|&e| e == element).count())
-        .unwrap(); // if tie vote for default room
+    let most_common = n_max(3, &query);
 
-    //println!("returned by query: {:?}", query);
-    most_common.to_string()
+    most_common.unwrap() // TODO: handle error
 }
 
-pub fn get_tier1(input: Tier1Input) -> String{
+pub fn get_tier1(input: Tier1Input) -> Vec<String>{
     use crate::schema::tier1_activity_objects;
     use crate::schema::tier1_activity_poses;
     use crate::schema::tier1_activity_rooms;
@@ -70,7 +65,7 @@ pub fn get_tier1(input: Tier1Input) -> String{
     let connection =  &mut establish_connection();
 
     // perform query
-    let tier1_pose_query = tier1_activity_poses::table
+    let tier1_pose_query: Vec<String> = tier1_activity_poses::table
         .inner_join(tier1activities::table)
         .inner_join(poses::table)
         .filter(poses::name.eq(pose_name))
@@ -78,7 +73,7 @@ pub fn get_tier1(input: Tier1Input) -> String{
         .load::<String>(connection)
         .unwrap();
     
-    let tier1_object_query = tier1_activity_objects::table
+    let tier1_object_query: Vec<String> = tier1_activity_objects::table
         .inner_join(tier1activities::table)
         .inner_join(objects::table)
         .filter(objects::name.eq_any(object_names))
@@ -86,7 +81,7 @@ pub fn get_tier1(input: Tier1Input) -> String{
         .load::<String>(connection)
         .unwrap();
     
-    let tier1_room_query = tier1_activity_rooms::table
+    let tier1_room_query: Vec<String> = tier1_activity_rooms::table
         .inner_join(tier1activities::table)
         .inner_join(rooms::table)
         .filter(rooms::name.eq_any(room_names))
@@ -94,22 +89,16 @@ pub fn get_tier1(input: Tier1Input) -> String{
         .load::<String>(connection)
         .unwrap();
 
-    println!("rooms: {:?}", tier1_room_query);
-    println!("object: {:?}", tier1_object_query);
-    println!("pose: {:?}", tier1_pose_query);
-
     let mut merged_query = vec![];
     merged_query.extend(tier1_object_query);
     merged_query.extend(tier1_pose_query);
     merged_query.extend(tier1_room_query);
 
-    let most_common = merged_query.iter()
-        .max_by_key(|&element| merged_query.iter().filter(|&e| e == element).count())
-        .unwrap(); // if tie vote for default room
-
-    most_common.to_string()
+    let most_common = n_max(3, &merged_query);
+    most_common.unwrap() // TODO: must handle error?
 }
-pub fn get_tier2(input: Tier2Input)-> String {
+
+pub fn get_tier2(input: Tier2Input) -> Vec<String> {
     use crate::schema::tier1activities; 
     use crate::schema::tier2activities;
     use crate::schema::objects;
@@ -121,7 +110,7 @@ pub fn get_tier2(input: Tier2Input)-> String {
     let (tier1_name, kph_pairs) = match input {
         Tier2Input::Cli(matches) => {
             // Get arguments from cli 
-            let tier1_name = matches.get_one::<String>("tier1").unwrap().to_owned();   
+            let tier1_name = matches.get_many::<String>("tier1").unwrap_or_default().map(|v| v.to_string()).collect::<Vec<_>>();
             // Kp-hits are obtained as a flattened list e.g: {-k l_ear cellphone -k r_hand cellphone} -> [l_ear, cellphone, r_hand cellphone]
             let kph = matches.get_many::<String>("keypoint-hits").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
             // here we convert them into pairs -> [(l_ear, cellphone), (r_hand, cellphone)]
@@ -132,10 +121,6 @@ pub fn get_tier2(input: Tier2Input)-> String {
             (tier1, kph)
         }
     };
-
-    // See what is being appended
-    println!("tier1  {:?}", tier1_name);
-    println!("keypoint hits {:?}", kph_pairs);
     
     // generate connection to db 
     let connection =  &mut establish_connection();
@@ -159,18 +144,64 @@ pub fn get_tier2(input: Tier2Input)-> String {
         .inner_join(tier2activities::table)
         .inner_join(tier1activities::table)
         .inner_join(keypoint_hits::table)
-        .filter(tier1activities::tier1.eq(tier1_name)
+        .filter(tier1activities::tier1.eq_any(tier1_name)
                 .and(keypoint_hits::kph_id.eq_any(kph)))
         .select(tier2activities::tier2)
         .load::<String>(connection)
         .unwrap();
 
-    println!("{:?}", tier2_tier1_query);
-    
-    let most_common = tier2_tier1_query.iter()
-        .max_by_key(|&element| tier2_tier1_query.iter().filter(|&e| e == element).count())
-        .unwrap(); // if tie vote for default room
+    let most_common = n_max(3, &tier2_tier1_query);
 
-    //println!("returned by query: {:?}", query);
-    most_common.to_string()
+    most_common.unwrap() //TODO: must handle error
+}
+
+pub fn get_activity(input: ActivityInput) -> Vec<String> {
+    let (room_input, local_ctx, pose_class, kph) = match input{
+        //TODO: Implement Cli case
+        ActivityInput::Json(global_ctx, local_ctx
+            , pose_class, kph ) => {
+                (RoomInput::Json(global_ctx), local_ctx, pose_class, kph)
+            }
+    };
+    
+    let rooms = get_room(room_input);  
+    
+    let tier1input = Tier1Input::Json(pose_class, local_ctx, rooms);
+    
+    let tier1activity = get_tier1(tier1input);
+
+    let tier2input = Tier2Input::Json(tier1activity, kph); 
+    
+
+    get_tier2(tier2input)
+}
+
+fn n_max<T>(n: usize, it: &Vec<T> ) -> Result<Vec<T>,()>
+    where 
+        T: std::fmt::Debug + std::hash::Hash + std::cmp::Eq + Clone  {
+            
+    // create a new has map
+    let mut count_map = HashMap::new();
+    
+    // count the number of ocurrences of each item
+    for item in it {
+        let count = count_map.entry(item.clone()).or_insert(0);
+        *count +=1;
+    }
+
+    // Sort items based on their frequency count
+    let mut sorted_items: Vec<_> = count_map.into_iter().collect();
+    sorted_items.sort_by(|a, b| b.1.cmp(&a.1));
+    
+    // if only one max value is found return otherwise return all ties 
+    let top_occ: Vec<_> = sorted_items.iter()
+                                      .filter(|(_, occr)| *occr == sorted_items[0].1)
+                                      .map(|(key, _)| key.clone()).collect();
+
+    // return only the string
+    if top_occ.len() <= n {
+        Ok(top_occ)
+    } else {
+        Ok(top_occ[..n].to_vec())
+    }
 }

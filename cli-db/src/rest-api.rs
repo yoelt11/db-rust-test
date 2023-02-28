@@ -1,4 +1,5 @@
-use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
+use actix_web::body::MessageBody;
+use actix_web::{get, post, App, HttpResponse, HttpServer, Responder, web};
 use lib::json_data_structs::*;
 use lib::input_types::*;
 use lib::get_entries;
@@ -15,7 +16,7 @@ async fn readme() -> impl Responder {
 async fn get_room(json_string: String) -> impl Responder {
     let parsed_string: RoomMessage = serde_json::from_str(&json_string).expect("Failed to decode Json string");
     let response = get_entries::get_room(RoomInput::Json(parsed_string.objects.iter().map(|obj | obj.name.clone()).collect()));
-    HttpResponse::Ok().body(response)
+    HttpResponse::Ok().body(ResponseWrapper(response))
 }
 
 #[post("/get_tier1")]
@@ -32,7 +33,7 @@ async fn get_tier1(json_string: String) -> impl Responder {
 
     // get response
     let response = get_entries::get_tier1(input);
-    HttpResponse::Ok().body(response)
+    HttpResponse::Ok().body(ResponseWrapper(response))
 }
 
 #[post("/get_tier2")]
@@ -50,13 +51,46 @@ async fn get_tier2(json_string: String) -> impl Responder {
 
     // get response
     let response = get_entries::get_tier2(input);
-    HttpResponse::Ok().body(response)
+    HttpResponse::Ok().body(ResponseWrapper(response))
 }
 
 #[post("/get_activity")]
 async fn get_activity(json_string: String) -> impl Responder {
-let response = json_string;
-    HttpResponse::Ok().body(response)
+    
+    let message: ActivityMessage = serde_json::from_str(&json_string).expect("Failed to decode Json string");
+
+    // get items from json and convert to string
+    let pose_class = message.pose_class;
+    let global_ctx = message.global_ctx.iter().map(|obj | obj.name.clone()).collect();
+    let local_ctx = message.local_ctx.iter().map(|obj | obj.name.clone()).collect();
+    let kph = message.kph;
+    // build input
+    let input = ActivityInput::Json(global_ctx, local_ctx, pose_class, kph);
+    // get activity
+    let response = get_entries::get_activity(input);
+
+    HttpResponse::Ok().body(ResponseWrapper(response))
+}
+
+struct ResponseWrapper(Vec<String>);
+
+impl MessageBody for ResponseWrapper {
+    type Error = actix_web::Error;
+
+    fn size(&self) -> actix_web::body::BodySize {
+        actix_web::body::BodySize::Sized(self.0.iter().fold(0, |acc, s| acc + s.len() as u64))
+    }
+
+    fn poll_next(
+        mut self: std::pin::Pin<&mut Self>,
+        _: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Result<actix_web::web::Bytes, Self::Error>>> {
+        let next = self.0.pop().map(|s| Ok(web::Bytes::from(s)));
+        match next {
+            Some(res) => std::task::Poll::Ready(Some(res)),
+            None => std::task::Poll::Ready(None),
+        }
+    }
 }
 
 #[actix_web::main]

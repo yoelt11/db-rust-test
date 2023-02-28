@@ -1,6 +1,5 @@
 pub mod add_entries;
 pub mod get_entries;
-pub mod get_entries_g;
 pub mod show_entries;
 pub mod input_types;
 pub mod json_data_structs;

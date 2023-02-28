@@ -1,5 +1,4 @@
 use serde::{Deserialize};
-use serde_json;
 
 #[derive(Deserialize)]
 #[serde(tag = "topic")]
@@ -12,6 +11,9 @@ pub enum Topic {
 
     #[serde(rename = "getTier2")]
     GetTier2 {message: Tier2Message},
+    
+    #[serde(rename = "getActivity")]
+    GetActivity {message: ActivityMessage},
 }
 
 // getRooms Message
@@ -31,7 +33,16 @@ pub struct Tier1Message{
 // getTier2 Message
 #[derive(Deserialize)]
 pub struct Tier2Message{
-    pub tier1:String,
+    pub tier1: Vec<String>,
+    pub kph: Vec<(String, String)>
+}
+
+// getTier2 Message
+#[derive(Deserialize)]
+pub struct ActivityMessage{
+    pub global_ctx: Vec<Objects>,
+    pub local_ctx: Vec<Objects>,
+    pub pose_class: String,
     pub kph: Vec<(String, String)>
 }
 

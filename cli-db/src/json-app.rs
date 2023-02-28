@@ -34,6 +34,18 @@ fn main() {
             
             println!("{:?}", tier2);
         }
+        Topic::GetActivity{message} => {
+            // get items from json and convert to string
+            let pose_class = message.pose_class;
+            let global_ctx = message.global_ctx.iter().map(|obj | obj.name.clone()).collect();
+            let local_ctx = message.local_ctx.iter().map(|obj | obj.name.clone()).collect();
+            let kph = message.kph;
+            // build input
+            let input = ActivityInput::Json(global_ctx, local_ctx, pose_class, kph);
+            // get activity
+            let inferred_activity = get_activity(input);
+            println!("{:?}", inferred_activity);
+        }
     }
 
 }
