@@ -2,12 +2,14 @@ use clap::{ArgMatches};
 use crate::models::*;
 use crate::establish_connection;
 use diesel::prelude::*;
+use std::error::Error;
 
-pub fn add_room(matches:&ArgMatches){
+pub fn add_room(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
     use crate::schema::rooms;
 
     // gets keypoint from cli
-    let room = matches.get_one::<String>("room").unwrap();   
+    let room = matches.get_one::<String>("room")
+                                        .ok_or("Missing required argument: room")?;                                     
     println!("adding room: {:?}", room);   
 
     // generate connection to db 
@@ -19,18 +21,22 @@ pub fn add_room(matches:&ArgMatches){
     diesel::insert_or_ignore_into(rooms::table)
         .values(&new_room)
         .execute(connection)
-        .expect("Error saving keypoint");
+        .map_err(|err| format!("Error saving room: {:?}", err))?;
+
+    Ok(())
 }
 
-//TODO
-pub fn add_object(matches:&ArgMatches){
+pub fn add_object(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
     use crate::schema::objects;
     use crate::schema::room_object;
     use crate::schema::rooms;
 
     // get inputs from cli
-    let object_name = matches.get_one::<String>("object").unwrap();
-    let room_names = matches.get_many::<String>("rooms").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
+    let object_name = matches.get_one::<String>("object").
+                                    ok_or("Missing argument object_name")?;
+    let room_names = matches.get_many::<String>("rooms")
+                                       .unwrap_or_default()
+                                       .map(|v| v.as_str()).collect::<Vec<_>>();
     println!("adding object: {:?}", object_name);   
     println!("adding rooms: {:?}", room_names);   
     
@@ -41,7 +47,7 @@ pub fn add_object(matches:&ArgMatches){
     let new_object = NewObject { name: object_name};
     diesel::insert_or_ignore_into(objects::table)
         .values(&new_object)
-        .execute(connection).unwrap(); //  unwrap unsafe must pass error
+        .execute(connection)?; //  unwrap unsafe must pass error
                                        //
     // for each room create if it doesnt exists
     let new_rooms = room_names
@@ -51,15 +57,15 @@ pub fn add_object(matches:&ArgMatches){
 
     diesel::insert_or_ignore_into(rooms::table)
         .values(&new_rooms)
-        .execute(connection).unwrap();
+        .execute(connection)?;
     
     // load rooms and object once
     let rooms = rooms::table
        .filter(rooms::name.eq_any(room_names))
-       .load::<Room>(connection).unwrap();
+       .load::<Room>(connection)?;
     let object = objects::table
        .filter(objects::name.eq(object_name))
-       .first::<Object>(connection).unwrap();
+       .first::<Object>(connection)?;
 
     // associate objects with rooms
     let room_objects = rooms
@@ -72,14 +78,17 @@ pub fn add_object(matches:&ArgMatches){
     // insert to table
     diesel::insert_or_ignore_into(room_object::table)
        .values(room_objects)
-       .execute(connection).unwrap();
+       .execute(connection)?;
+
+    Ok(())
 }    
 
-pub fn add_keypoint(matches:&ArgMatches){
+pub fn add_keypoint(matches: &ArgMatches) -> Result<(), Box<dyn Error>>{
     use crate::schema::keypoints;
 
     // gets keypoint from cli
-    let keypoint = matches.get_one::<String>("keypoint").unwrap();   
+    let keypoint = matches.get_one::<String>("keypoint")
+                                                      .ok_or("Missing argument keypoint")?;   
     println!("adding keypoint: {:?}", keypoint);   
 
     // generate connection to db 
@@ -91,14 +100,17 @@ pub fn add_keypoint(matches:&ArgMatches){
     diesel::insert_or_ignore_into(keypoints::table)
         .values(&new_keypoint)
         .execute(connection)
-        .expect("Error saving keypoint");
+        .map_err(|err| format!("Error saving keypoint: {}", err))?;
+
+    Ok(())
 }    
 
-pub fn add_poses(matches:&ArgMatches){
+pub fn add_poses(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
     use crate::schema::poses;
 
     // gets keypoint from cli
-    let pose = matches.get_one::<String>("pose").unwrap();   
+    let pose = matches.get_one::<String>("pose")
+                                .ok_or("Missing argument pose")?;   
     println!("adding pose: {:?}", pose);   
 
     // generate connection to db 
@@ -110,10 +122,12 @@ pub fn add_poses(matches:&ArgMatches){
     diesel::insert_or_ignore_into(poses::table)
         .values(&new_pose)
         .execute(connection)
-        .expect("Error saving keypoint");
+        .map_err(|err| format!("Error saving keypoint: {}", err))?;
+
+    Ok(())
 }    
 
-pub fn add_tier1(matches:&ArgMatches){
+pub fn add_tier1(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
     // schema.rs
     use crate::schema::objects;
     use crate::schema::tier1_activity_objects;
@@ -124,7 +138,8 @@ pub fn add_tier1(matches:&ArgMatches){
     use crate::schema::tier1activities;
 
     // get variables from cli
-    let tier1_name = matches.get_one::<String>("tier1").unwrap();   
+    let tier1_name = matches.get_one::<String>("tier1")
+                                             .ok_or("Missing argument tier1_name")?;   
     let pose_names = matches.get_many::<String>("poses").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();   
     let room_names = matches.get_many::<String>("rooms").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
     let object_names = matches.get_many::<String>("object").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
@@ -141,7 +156,7 @@ pub fn add_tier1(matches:&ArgMatches){
     let new_activity = NewTier1Activity {tier1: tier1_name};
     diesel::insert_or_ignore_into(tier1activities::table)
         .values(&new_activity)
-        .execute(connection).unwrap(); //  unwrap unsafe must pass error
+        .execute(connection)?; //  unwrap unsafe must pass error
 
     // create pose if not exists
     let new_poses = pose_names
@@ -151,7 +166,7 @@ pub fn add_tier1(matches:&ArgMatches){
 
     diesel::insert_or_ignore_into(poses::table)
         .values(&new_poses)
-        .execute(connection).unwrap(); //  unwrap unsafe must pass error
+        .execute(connection)?; //  unwrap unsafe must pass error
 
     // create rooms if not exists
     let new_rooms = room_names
@@ -161,7 +176,7 @@ pub fn add_tier1(matches:&ArgMatches){
 
     diesel::insert_or_ignore_into(rooms::table)
         .values(&new_rooms)
-        .execute(connection).unwrap();
+        .execute(connection)?;
 
     // create objects if not exists
     let new_objects = object_names
@@ -171,24 +186,24 @@ pub fn add_tier1(matches:&ArgMatches){
 
     diesel::insert_or_ignore_into(objects::table)
         .values(&new_objects)
-        .execute(connection).unwrap();
+        .execute(connection)?;
 
     // load model items 
     let rooms = rooms::table
        .filter(rooms::name.eq_any(room_names))
-       .load::<Room>(connection).unwrap();
+       .load::<Room>(connection)?;
     
     let objects = objects::table
        .filter(objects::name.eq_any(object_names))
-       .load::<Object>(connection).unwrap();
+       .load::<Object>(connection)?;
 
     let tier1 = tier1activities::table
        .filter(tier1activities::tier1.eq(tier1_name))
-       .first::<Tier1Activities>(connection).unwrap();
+       .first::<Tier1Activities>(connection)?;
 
     let poses = poses::table
        .filter(poses::name.eq_any(pose_names))
-       .load::<Pose>(connection).unwrap();
+       .load::<Pose>(connection)?;
     
     // create relationship tables: Rooms-> Tier1  
     let room_tier1 = rooms
@@ -201,7 +216,7 @@ pub fn add_tier1(matches:&ArgMatches){
 
     diesel::insert_or_ignore_into(tier1_activity_rooms::table)
        .values(room_tier1)
-       .execute(connection).unwrap();
+       .execute(connection)?;
     
     // create relationship tables: Objects-> Tier1  
     let object_tier1 = objects
@@ -214,7 +229,7 @@ pub fn add_tier1(matches:&ArgMatches){
 
     diesel::insert_or_ignore_into(tier1_activity_objects::table)
        .values(object_tier1)
-       .execute(connection).unwrap();
+       .execute(connection)?;
 
     // create relationship tables: Pose-> Tier1  
     let pose_tier1 = poses
@@ -227,12 +242,14 @@ pub fn add_tier1(matches:&ArgMatches){
 
     diesel::insert_or_ignore_into(tier1_activity_poses::table)
        .values(pose_tier1)
-       .execute(connection).unwrap();
+       .execute(connection)?;
+
+       Ok(())
 
 }    
 
 //TODO
-pub fn add_tier2(matches:&ArgMatches){
+pub fn add_tier2(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
     // schema.rs
     use crate::schema::tier1activities; 
     use crate::schema::tier2activities;
@@ -242,8 +259,10 @@ pub fn add_tier2(matches:&ArgMatches){
     use crate::schema::keypoint_hits;
 
     // Get arguments from cli 
-    let tier2_name = matches.get_one::<String>("tier2").unwrap();   
-    let tier1_name = matches.get_one::<String>("tier1").unwrap();   
+    let tier2_name = matches.get_one::<String>("tier2")
+                                  .ok_or("Missing Argument tier2_name")?;   
+    let tier1_name = matches.get_one::<String>("tier1")
+                                                        .ok_or("Missing argument tier1_name")?;   
     // Kp-hits are obtained as a flattened list e.g: {-k l_ear cellphone -k r_hand cellphone} -> [l_ear, cellphone, r_hand cellphone]
     let kph = matches.get_many::<String>("keypoint-hits").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
     // here we convert them into pairs -> [(l_ear, cellphone), (r_hand, cellphone)]
@@ -261,14 +280,14 @@ pub fn add_tier2(matches:&ArgMatches){
     let new_tier2 = NewTier2Activity {tier2: tier2_name};
     diesel::insert_or_ignore_into(tier2activities::table)
         .values(&new_tier2)
-        .execute(connection).unwrap(); //  unwrap unsafe must pass error
+        .execute(connection)?; //  unwrap unsafe must pass error
 
 
     // create tier1 if not exits
     let new_activity = NewTier1Activity {tier1: tier1_name};
     diesel::insert_or_ignore_into(tier1activities::table)
         .values(&new_activity)
-        .execute(connection).unwrap(); //  unwrap unsafe must pass error
+        .execute(connection)?; //  unwrap unsafe must pass error
 
     for pair in &kph_pairs {
         // create kph if not exits
@@ -279,11 +298,11 @@ pub fn add_tier2(matches:&ArgMatches){
         diesel::insert_or_ignore_into(keypoints::table)
             .values(&new_keypoint)
             .execute(connection)
-            .expect("Error saving keypoint");
+            .map_err(|err| format!("Error saving keypoint {}", err))?;
     
         let keypoint = keypoints::table
            .filter(keypoints::name.eq(keypoint_name))
-           .first::<Keypoint>(connection).unwrap();
+           .first::<Keypoint>(connection)?;
 
             // get object id (then it must be created if not exists)
         let new_object = NewObject { name: object_name };
@@ -291,11 +310,11 @@ pub fn add_tier2(matches:&ArgMatches){
         diesel::insert_or_ignore_into(objects::table)
             .values(&new_object)
             .execute(connection)
-            .expect("Error saving object");
-
+            .map_err(|err| format!("Error saving object {}", err))?;
+    
         let object = objects::table
            .filter(objects::name.eq(object_name))
-           .first::<Object>(connection).unwrap();
+           .first::<Object>(connection)?;
 
             // add kph to table
         let new_kph = NewKPH {
@@ -305,17 +324,17 @@ pub fn add_tier2(matches:&ArgMatches){
 
         diesel::insert_or_ignore_into(keypoint_hits::table)
              .values(&new_kph)
-             .execute(connection).unwrap();
+             .execute(connection)?;
     }
     // load database items 
         // get id from tier2 
     let tier2 = tier2activities::table
        .filter(tier2activities::tier2.eq(tier2_name))
-       .first::<Tier2Activities>(connection).unwrap();
+       .first::<Tier2Activities>(connection)?;
         // get id from tier1
     let tier1 = tier1activities::table
        .filter(tier1activities::tier1.eq(tier1_name))
-       .first::<Tier1Activities>(connection).unwrap();
+       .first::<Tier1Activities>(connection)?;
         // get ids from kph 
     // for only one pair
     let kph: Vec<i32> = kph_pairs
@@ -343,5 +362,7 @@ pub fn add_tier2(matches:&ArgMatches){
     
     diesel::insert_or_ignore_into(tier2_tier1_kph::table)
        .values(tier2_tier1_kph)
-       .execute(connection).unwrap();
+       .execute(connection)?;
+       
+    Ok(())
 }    

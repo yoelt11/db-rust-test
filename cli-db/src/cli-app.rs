@@ -5,7 +5,7 @@ use lib::input_types::*;
 
 fn main() {
 
-    let app_m = Command::new("cli-db")
+    let mut app_m = Command::new("cli-db")
          .version(env!("CARGO_PKG_VERSION"))
          .author(env!("CARGO_PKG_AUTHORS"))
          .about("Multi-level menu example")
@@ -94,19 +94,21 @@ fn main() {
                     .long("kph")
                     .value_name("The keypoint hits related to the tier2 activity"))
             )
-        )
-        .get_matches();
+        );
 
-    match app_m.subcommand() {
+    match app_m.clone().get_matches().subcommand() {
         Some(("add_entry",  sub_m)) => {
             match sub_m.subcommand(){
-                Some(("rooms", level3_m)) => {add_room(level3_m)},
-                Some(("keypoints", level3_m)) => {add_keypoint(level3_m)},
-                Some(("poses", level3_m)) => {add_poses(level3_m)},
-                Some(("objects", level3_m)) => {add_object(level3_m)},
-                Some(("tier1", level3_m)) => {add_tier1(level3_m)},
-                Some(("tier2", level3_m)) => {add_tier2(level3_m)},
-                _  => println!("Error matching options")
+                Some(("rooms", level3_m)) => {println!("{:?}",add_room(level3_m));},
+                Some(("keypoints", level3_m)) => {println!("{:?}", add_keypoint(level3_m));},
+                Some(("poses", level3_m)) => {println!("{:?}", add_poses(level3_m));},
+                Some(("objects", level3_m)) => {println!("{:?}", add_object(level3_m));},
+                Some(("tier1", level3_m)) => {println!(" {:?}", add_tier1(level3_m));},
+                Some(("tier2", level3_m)) => {println!(" {:?}", add_tier2(level3_m));},
+                _ => {
+                    let subcmd = app_m.find_subcommand_mut("add_entry").unwrap();
+                    subcmd.print_help().unwrap();
+                }
             }
         },
         Some(("show_entry",  _sub_m)) => {println!("push was used")}, 
@@ -124,10 +126,13 @@ fn main() {
                     let tier2 = get_tier2(Tier2Input::Cli(level3_m.clone()));
                     println!("voted activity: {:?}", tier2);
                 },
-                _  => println!("Error matching options")
+                _  => {
+                    let subcmd = app_m.find_subcommand_mut("add_entry").unwrap();
+                    subcmd.print_help().unwrap();
+                } 
             }
         },
-        _ => {println!("Error matching outermost")}, 
+       _ => {app_m.clone().print_help().unwrap()} 
     }
 }
 
