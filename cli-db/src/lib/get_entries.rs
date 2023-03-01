@@ -1,10 +1,22 @@
 use crate::{establish_connection, input_types::{ActivityInput, RoomInput, Tier1Input, Tier2Input}};
 use diesel::prelude::*;
 use std::collections::HashMap;
+use std::error::Error;
 
-pub fn get_room(input: RoomInput) -> Vec<String> {
-    //TODO: must handle empty query
-    //TODO: must handle ties
+/// Infers a room based on a vector of objects.
+/// 
+/// # Example
+/// 
+/// Usage:
+/// ```rust
+///                // for cli-app. Where level3_m is &ArgMatches 
+///                Some(("room", level3_m)) => {
+///                   let room = get_room(RoomInput::Cli(level3_m.clone()));
+///               } 
+///               // for json-app.
+///                  let room: Vec<String> = get_room(RoomInput::Json(vec!["apple","orange"]));
+/// ```
+pub fn get_room(input: RoomInput) -> Result<Vec<String>, Box<dyn Error>> {
     use crate::schema::room_object;
     use crate::schema::objects;
     use crate::schema::rooms;
@@ -20,7 +32,6 @@ pub fn get_room(input: RoomInput) -> Vec<String> {
         RoomInput::Json(objects) => objects,
     };
 
-    // perform query
     // generate connection to db 
     let connection =  &mut establish_connection();
 
@@ -30,15 +41,14 @@ pub fn get_room(input: RoomInput) -> Vec<String> {
         .inner_join(objects::table)
         .filter(objects::name.eq_any(object_names))
         .select(rooms::name)
-        .load::<String>(connection)
-        .unwrap();
+        .load::<String>(connection)?;
 
     let most_common = n_max(3, &query);
 
-    most_common.unwrap() // TODO: handle error
+    most_common 
 }
 
-pub fn get_tier1(input: Tier1Input) -> Vec<String>{
+pub fn get_tier1(input: Tier1Input) -> Result<Vec<String>, Box<dyn Error>>{
     use crate::schema::tier1_activity_objects;
     use crate::schema::tier1_activity_poses;
     use crate::schema::tier1_activity_rooms;
@@ -70,24 +80,21 @@ pub fn get_tier1(input: Tier1Input) -> Vec<String>{
         .inner_join(poses::table)
         .filter(poses::name.eq(pose_name))
         .select(tier1activities::tier1)
-        .load::<String>(connection)
-        .unwrap();
+        .load::<String>(connection)?;
     
     let tier1_object_query: Vec<String> = tier1_activity_objects::table
         .inner_join(tier1activities::table)
         .inner_join(objects::table)
         .filter(objects::name.eq_any(object_names))
         .select(tier1activities::tier1)
-        .load::<String>(connection)
-        .unwrap();
+        .load::<String>(connection)?;
     
     let tier1_room_query: Vec<String> = tier1_activity_rooms::table
         .inner_join(tier1activities::table)
         .inner_join(rooms::table)
         .filter(rooms::name.eq_any(room_names))
         .select(tier1activities::tier1)
-        .load::<String>(connection)
-        .unwrap();
+        .load::<String>(connection)?;
 
     let mut merged_query = vec![];
     merged_query.extend(tier1_object_query);
@@ -95,10 +102,11 @@ pub fn get_tier1(input: Tier1Input) -> Vec<String>{
     merged_query.extend(tier1_room_query);
 
     let most_common = n_max(3, &merged_query);
-    most_common.unwrap() // TODO: must handle error?
+
+    most_common 
 }
 
-pub fn get_tier2(input: Tier2Input) -> Vec<String> {
+pub fn get_tier2(input: Tier2Input) -> Result<Vec<String>, Box<dyn Error>> {
     use crate::schema::tier1activities; 
     use crate::schema::tier2activities;
     use crate::schema::objects;
@@ -147,15 +155,14 @@ pub fn get_tier2(input: Tier2Input) -> Vec<String> {
         .filter(tier1activities::tier1.eq_any(tier1_name)
                 .and(keypoint_hits::kph_id.eq_any(kph)))
         .select(tier2activities::tier2)
-        .load::<String>(connection)
-        .unwrap();
+        .load::<String>(connection)?;
 
     let most_common = n_max(3, &tier2_tier1_query);
 
-    most_common.unwrap() //TODO: must handle error
+    most_common
 }
 
-pub fn get_activity(input: ActivityInput) -> Vec<String> {
+pub fn get_activity(input: ActivityInput) -> Result<Vec<String>, Box<dyn Error>> {
     let (room_input, local_ctx, pose_class, kph) = match input{
         //TODO: Implement Cli case
         ActivityInput::Json(global_ctx, local_ctx
@@ -164,19 +171,19 @@ pub fn get_activity(input: ActivityInput) -> Vec<String> {
             }
     };
     
-    let rooms = get_room(room_input);  
+    let rooms = get_room(room_input)?;  
     
     let tier1input = Tier1Input::Json(pose_class, local_ctx, rooms);
     
-    let tier1activity = get_tier1(tier1input);
+    let tier1activity = get_tier1(tier1input)?;
 
     let tier2input = Tier2Input::Json(tier1activity, kph); 
     
 
-    get_tier2(tier2input)
+    Ok(get_tier2(tier2input)?)
 }
 
-fn n_max<T>(n: usize, it: &Vec<T> ) -> Result<Vec<T>,()>
+fn n_max<T>(n: usize, it: &Vec<T> ) -> Result<Vec<T>, Box<dyn Error>>
     where 
         T: std::fmt::Debug + std::hash::Hash + std::cmp::Eq + Clone  {
             

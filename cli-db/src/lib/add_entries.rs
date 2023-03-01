@@ -4,6 +4,8 @@ use crate::establish_connection;
 use diesel::prelude::*;
 use std::error::Error;
 
+/// Adds a room to database.
+/// Currently it only available fot cli-app
 pub fn add_room(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
     use crate::schema::rooms;
 
@@ -26,6 +28,8 @@ pub fn add_room(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
     Ok(())
 }
 
+/// Adds a object to database.
+/// Currently it only available fot cli-app
 pub fn add_object(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
     use crate::schema::objects;
     use crate::schema::room_object;
@@ -83,6 +87,8 @@ pub fn add_object(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
     Ok(())
 }    
 
+/// Adds a keypoint to database.
+/// Currently it only available fot cli-app
 pub fn add_keypoint(matches: &ArgMatches) -> Result<(), Box<dyn Error>>{
     use crate::schema::keypoints;
 
@@ -105,6 +111,8 @@ pub fn add_keypoint(matches: &ArgMatches) -> Result<(), Box<dyn Error>>{
     Ok(())
 }    
 
+/// Adds a poses to database.
+/// Currently it only available fot cli-app
 pub fn add_poses(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
     use crate::schema::poses;
 
@@ -127,6 +135,8 @@ pub fn add_poses(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
     Ok(())
 }    
 
+/// Adds a tier1 to database.
+/// Currently it only available fot cli-app
 pub fn add_tier1(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
     // schema.rs
     use crate::schema::objects;
@@ -248,7 +258,9 @@ pub fn add_tier1(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
 
 }    
 
-//TODO
+/// 
+/// Adds a tier2 to database.
+/// Currently it only available fot cli-app
 pub fn add_tier2(matches:&ArgMatches) -> Result<(), Box<dyn Error>>{
     // schema.rs
     use crate::schema::tier1activities; 

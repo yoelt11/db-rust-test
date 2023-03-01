@@ -15,7 +15,11 @@ async fn readme() -> impl Responder {
 #[post("/get_room")]
 async fn get_room(json_string: String) -> impl Responder {
     let parsed_string: RoomMessage = serde_json::from_str(&json_string).expect("Failed to decode Json string");
-    let response = get_entries::get_room(RoomInput::Json(parsed_string.objects.iter().map(|obj | obj.name.clone()).collect()));
+    let response = get_entries::get_room(RoomInput::Json(parsed_string.objects
+                                                                        .iter()
+                                                                        .map(|obj | obj.name.clone())
+                                                                        .collect()))
+                                                                        .unwrap_or(vec!["None".to_string()]);
     HttpResponse::Ok().body(ResponseWrapper(response))
 }
 
@@ -32,7 +36,7 @@ async fn get_tier1(json_string: String) -> impl Responder {
     let input = Tier1Input::Json(pose, objects, rooms);
 
     // get response
-    let response = get_entries::get_tier1(input);
+    let response = get_entries::get_tier1(input).unwrap_or(vec!["None".to_string()]);
     HttpResponse::Ok().body(ResponseWrapper(response))
 }
 
@@ -40,7 +44,7 @@ async fn get_tier1(json_string: String) -> impl Responder {
 async fn get_tier2(json_string: String) -> impl Responder {
 
     // parse json to object
-    let parsed_string: Tier2Message = serde_json::from_str(&json_string).expect("Fialed to decode Json string");
+    let parsed_string: Tier2Message = serde_json::from_str(&json_string).expect("Failed to decode Json string");
 
     // build tier2 input data type 
 
@@ -50,7 +54,8 @@ async fn get_tier2(json_string: String) -> impl Responder {
     let input = Tier2Input::Json(tier1, kph);
 
     // get response
-    let response = get_entries::get_tier2(input);
+    let response = get_entries::get_tier2(input)
+                                            .unwrap_or(vec!["None".to_string()]);
     HttpResponse::Ok().body(ResponseWrapper(response))
 }
 
@@ -67,7 +72,8 @@ async fn get_activity(json_string: String) -> impl Responder {
     // build input
     let input = ActivityInput::Json(global_ctx, local_ctx, pose_class, kph);
     // get activity
-    let response = get_entries::get_activity(input);
+    let response = get_entries::get_activity(input)
+                                        .unwrap_or(vec!["None".to_string()]);
 
     HttpResponse::Ok().body(ResponseWrapper(response))
 }
