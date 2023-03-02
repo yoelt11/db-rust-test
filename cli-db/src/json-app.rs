@@ -10,7 +10,10 @@ fn main() {
 
     match topic {
         Topic:: GetRooms{message} => {
-         let room = get_room(RoomInput::Json(message.objects.iter().map(|obj | obj.name.clone()).collect()));
+         let room = get_room(RoomInput::Json(message.objects
+                                                    .iter()
+                                                    .map(|obj | obj.name.clone())
+                                                    .collect())).unwrap_or(vec!["None".to_string()]);
          println!("{:?}", room);
         }
         Topic::GetTier1{message} => {
@@ -20,7 +23,7 @@ fn main() {
             
             let input = Tier1Input::Json(pose, objects, rooms);
             
-            let tier1 = get_tier1(input);
+            let tier1 = get_tier1(input).unwrap_or(vec!["None".to_string()]);
             
             println!("{:?}", tier1);
         }
@@ -30,7 +33,7 @@ fn main() {
             
             let input = Tier2Input::Json(tier1, kph);
 
-            let tier2 = get_tier2(input);
+            let tier2 = get_tier2(input).unwrap_or(vec!["None".to_string()]);
             
             println!("{:?}", tier2);
         }
@@ -43,7 +46,7 @@ fn main() {
             // build input
             let input = ActivityInput::Json(global_ctx, local_ctx, pose_class, kph);
             // get activity
-            let inferred_activity = get_activity(input);
+            let inferred_activity = get_activity(input).unwrap_or(vec!["None".to_string()]);
             println!("{:?}", inferred_activity);
         }
     }
