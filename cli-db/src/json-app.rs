@@ -6,7 +6,7 @@ use serde_json;
 fn main() {
     let json_string = std::env::args().nth(1).expect("No JSON string provided");
 
-    let topic: Topic = serde_json::from_str(&json_string).expect("Fialed to decode Json string");
+    let topic: Topic = serde_json::from_str(&json_string).expect("Failed to decode Json string");
 
     match topic {
         Topic:: GetRooms{message} => {
@@ -46,7 +46,7 @@ fn main() {
             // build input
             let input = ActivityInput::Json(global_ctx, local_ctx, pose_class, kph);
             // get activity
-            let inferred_activity = get_activity(input).unwrap_or(vec!["None".to_string()]);
+            let inferred_activity = get_activity(input);
             println!("{:?}", inferred_activity);
         }
     }
