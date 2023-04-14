@@ -162,7 +162,7 @@ pub fn get_tier2(input: Tier2Input) -> Result<Vec<String>, Box<dyn Error>> {
     most_common
 }
 
-pub fn get_activity(input: ActivityInput) -> Result<Vec<String>, Box<dyn Error>> {
+pub fn get_activity(input: ActivityInput) -> Vec<String> {
     let (room_input, local_ctx, pose_class, kph) = match input{
         //TODO: Implement Cli case
         ActivityInput::Json(global_ctx, local_ctx
@@ -171,16 +171,37 @@ pub fn get_activity(input: ActivityInput) -> Result<Vec<String>, Box<dyn Error>>
             }
     };
     
-    let rooms = get_room(room_input)?;  
-    
-    let tier1input = Tier1Input::Json(pose_class, local_ctx, rooms);
-    
-    let tier1activity = get_tier1(tier1input)?;
+    let result = match get_room(room_input) {
+        Ok(rooms) => {
+            if rooms.is_empty() {
+                vec![pose_class.clone()]
+            } else {
+                match get_tier1(Tier1Input::Json(pose_class.clone(), local_ctx, rooms)) {
+                    Ok(tier1activity) => {
+                        if tier1activity.is_empty() {
+                            vec![pose_class]
+                        } else {
+                            match get_tier2(Tier2Input::Json(tier1activity.clone(), kph)) {
+                                Ok(tier2activity) => {
+                                    if tier2activity.is_empty() {
+                                        tier1activity
+                                    } else {
+                                        let v = format!("[{}] - {}",tier1activity[0], tier2activity[0]);
+                                        vec![v]
+                                    }
+                                },
+                                Err(e) => tier1activity
+                            }
+                        }
+                    },
+                    Err(e) => vec![pose_class]
+                }
+            }
+        },
+        Err(e) => vec![pose_class]
+    };
 
-    let tier2input = Tier2Input::Json(tier1activity, kph); 
-    
-
-    Ok(get_tier2(tier2input)?)
+    result
 }
 
 fn n_max<T>(n: usize, it: &Vec<T> ) -> Result<Vec<T>, Box<dyn Error>>
