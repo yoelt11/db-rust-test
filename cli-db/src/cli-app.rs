@@ -92,7 +92,7 @@ fn main() {
                     .num_args(2)
                     .short('k')
                     .long("kph")
-                    .value_name("The keypoint hits related to the tier2 activity"))
+                    .value_name("The keypoint hits related to the tier2 activity. e.g -k '<keypoint 1> <object 1> -k <keypoint n> <object n>' " ))
             )
         );
 

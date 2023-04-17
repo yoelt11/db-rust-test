@@ -169,6 +169,7 @@ pub fn get_tier2(input: Tier2Input) -> Result<Vec<String>, Box<dyn Error>> {
 }
 
 pub fn get_activity(input: ActivityInput) -> Vec<String> {
+
     let (room_input, local_ctx, pose_class, kph) = match input{
         //TODO: Implement Cli case
         ActivityInput::Json(global_ctx, local_ctx
