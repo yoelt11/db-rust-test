@@ -193,19 +193,19 @@ pub fn get_activity(input: ActivityInput) -> Vec<String> {
                                     if tier2activity.is_empty() {
                                         tier1activity
                                     } else {
-                                        let v = format!("[{}] - {}",tier1activity[0], tier2activity[0]);
+                                        let v = format!("{}", tier2activity[0]);
                                         vec![v]
                                     }
                                 },
-                                Err(e) => tier1activity
+                                Err(_e) => tier1activity
                             }
                         }
                     },
-                    Err(e) => vec![pose_class]
+                    Err(_e) => vec![pose_class]
                 }
             }
         },
-        Err(e) => vec![pose_class]
+        Err(_e) => vec![pose_class]
     };
 
     result
