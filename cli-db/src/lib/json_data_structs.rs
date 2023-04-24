@@ -33,8 +33,9 @@ pub struct Tier1Message{
 // getTier2 Message
 #[derive(Deserialize)]
 pub struct Tier2Message{
+    pub pose: String,
     pub tier1: Vec<String>,
-    pub kph: Vec<(String, String)>
+    pub kph: Vec<(String, String)>,
 }
 
 // getTier2 Message

@@ -109,6 +109,13 @@ pub struct NewTier2Activity<'a> {
     pub tier2: &'a str,
 }
 
+#[derive(Insertable)]
+#[diesel(table_name = tier2_activity_poses)]
+pub struct NewTier2Poses {
+    pub pose_id: i32,
+    pub tier2_id: i32,
+}
+
 // Tier2 relations
 #[derive(Insertable)]
 #[diesel(table_name = tier2_tier1_kph)]

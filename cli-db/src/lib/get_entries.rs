@@ -115,24 +115,27 @@ pub fn get_tier1(input: Tier1Input) -> Result<Vec<String>, Box<dyn Error>>{
 pub fn get_tier2(input: Tier2Input) -> Result<Vec<String>, Box<dyn Error>> {
     use crate::schema::tier1activities; 
     use crate::schema::tier2activities;
+    use crate::schema::tier2_activity_poses;
     use crate::schema::objects;
+    use crate::schema::poses;
     use crate::schema::keypoints;
     use crate::schema::tier2_tier1_kph;
     use crate::schema::keypoint_hits;
 
     // get inputs depending on case CLI app or Json app
-    let (tier1_name, kph_pairs) = match input {
+    let (pose, tier1_name, kph_pairs) = match input {
         Tier2Input::Cli(matches) => {
-            // Get arguments from cli 
+            // Get arguments from cli
+            let pose = matches.get_one::<String>("poses").unwrap().clone(); 
             let tier1_name = matches.get_many::<String>("tier1").unwrap_or_default().map(|v| v.to_string()).collect::<Vec<_>>();
             // Kp-hits are obtained as a flattened list e.g: {-k l_ear cellphone -k r_hand cellphone} -> [l_ear, cellphone, r_hand cellphone]
             let kph = matches.get_many::<String>("keypoint-hits").unwrap_or_default().map(|v| v.as_str()).collect::<Vec<_>>();
             // here we convert them into pairs -> [(l_ear, cellphone), (r_hand, cellphone)]
             let kph_pairs: Vec<_> = kph.chunks(2).map(|chunk| (chunk[0].to_owned(), chunk[1].to_owned())).collect();
-            (tier1_name, kph_pairs)
+            (pose, tier1_name, kph_pairs)
             }
-        Tier2Input::Json(tier1, kph) => {
-            (tier1, kph)
+        Tier2Input::Json(pose, tier1, kph) => {
+            (pose, tier1, kph)
         }
     };
     
@@ -140,6 +143,13 @@ pub fn get_tier2(input: Tier2Input) -> Result<Vec<String>, Box<dyn Error>> {
     let connection =  &mut establish_connection();
 
     // perform query
+    let tier2_pose_query: Vec<String> = tier2_activity_poses::table
+        .inner_join(tier2activities::table)
+        .inner_join(poses::table)
+        .filter(poses::name.eq(pose))
+        .select(tier2activities::tier2)
+        .load::<String>(connection)?;
+
     // query from kph to get kph_id according to object_id and keypoint_id
     let kph: Vec<i32> = kph_pairs
          .iter()
@@ -163,7 +173,11 @@ pub fn get_tier2(input: Tier2Input) -> Result<Vec<String>, Box<dyn Error>> {
         .select(tier2activities::tier2)
         .load::<String>(connection)?;
 
-    let most_common = n_max(3, &tier2_tier1_query);
+    let mut merged_query = vec![];
+    merged_query.extend(tier2_pose_query);
+    merged_query.extend(tier2_tier1_query);
+
+    let most_common = n_max(3, &merged_query);
 
     most_common
 }
@@ -188,7 +202,7 @@ pub fn get_activity(input: ActivityInput) -> Vec<String> {
                         if tier1activity.is_empty() {
                             vec![pose_class]
                         } else {
-                            match get_tier2(Tier2Input::Json(tier1activity.clone(), kph)) {
+                            match get_tier2(Tier2Input::Json(pose_class.clone(), tier1activity.clone(), kph)) {
                                 Ok(tier2activity) => {
                                     if tier2activity.is_empty() {
                                         tier1activity

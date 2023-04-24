@@ -72,9 +72,9 @@ diesel::table! {
 }
 
 diesel::table! {
-    tier2_activity_poses (tier2_id, pose_id) {
-        tier2_id -> Integer,
+    tier2_activity_poses (pose_id, tier2_id) {
         pose_id -> Integer,
+        tier2_id -> Integer,
     }
 }
 
@@ -92,7 +92,6 @@ diesel::table! {
         tier2 -> Text,
     }
 }
-
 
 diesel::joinable!(keypoint_hits -> keypoints (keypoint_id));
 diesel::joinable!(keypoint_hits -> objects (object_id));

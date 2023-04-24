@@ -28,10 +28,11 @@ fn main() {
             println!("{:?}", tier1);
         }
         Topic::GetTier2{message} => {
+            let pose = message.pose;
             let tier1 = message.tier1;
             let kph = message.kph;
             
-            let input = Tier2Input::Json(tier1, kph);
+            let input = Tier2Input::Json(pose, tier1, kph);
 
             let tier2 = get_tier2(input).unwrap_or(vec!["None".to_string()]);
             

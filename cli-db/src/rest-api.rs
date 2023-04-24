@@ -48,10 +48,11 @@ async fn get_tier2(json_string: String) -> impl Responder {
 
     // build tier2 input data type 
 
+    let pose = parsed_string.pose;
     let tier1 = parsed_string.tier1;
     let kph = parsed_string.kph;
     
-    let input = Tier2Input::Json(tier1, kph);
+    let input = Tier2Input::Json(pose, tier1, kph);
 
     // get response
     let response = get_entries::get_tier2(input)
@@ -72,8 +73,7 @@ async fn get_activity(json_string: String) -> impl Responder {
     // build input
     let input = ActivityInput::Json(global_ctx, local_ctx, pose_class, kph);
     // get activity
-    let response = get_entries::get_activity(input)
-                                        .unwrap_or(vec!["None".to_string()]);
+    let response = get_entries::get_activity(input);
 
     HttpResponse::Ok().body(ResponseWrapper(response))
 }

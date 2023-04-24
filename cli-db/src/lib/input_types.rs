@@ -14,7 +14,8 @@ pub enum Tier1Input {
 #[derive(Debug)]
 pub enum Tier2Input {
     Cli(ArgMatches),
-    Json(Vec<String>, Vec<(String,String)>)
+    // Pose, Vec<Tier1>, Vec<(object, keypoint)>
+    Json(String, Vec<String>, Vec<(String,String)>)
 }
 
 pub enum ActivityInput {
