@@ -99,11 +99,15 @@ pub fn get_tier1(input: Tier1Input) -> Result<Vec<String>, Box<dyn Error>>{
     let mut merged_query = vec![];
 
     if tier1_object_query.is_empty() {
+        // returns empty query
         let most_common = n_max(3, &merged_query);
         return most_common
     }
 
+    // make objects in  local ctx have more weight over the decision
+    merged_query.extend(tier1_object_query.clone());
     merged_query.extend(tier1_object_query);
+
     merged_query.extend(tier1_pose_query);
     merged_query.extend(tier1_room_query);
 
